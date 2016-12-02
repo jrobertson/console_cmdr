@@ -9,7 +9,6 @@ require 'terminfo'
 require 'io/console'
 
 
-
 class ConsoleCmdr < Cmdr
 
   def initialize(pxindex: nil)
@@ -177,45 +176,11 @@ class ConsoleCmdr < Cmdr
       @keys = []
 
       if key.to_i.to_s == key and @input_selection and @input_selection.any?
-        r = select_item(key.to_i-1)
-        key = '' 
-        return r
-      end
-
-      parent = @pxi.parent.title if @pxi.parent
-
-      a = @pxi.q?(@linebuffer+key)
-    
-      if a then
-        unless @input_selection == a.map(&:title) then
-          @input_selection = a.map(&:title)
-          @selection = a.map.with_index do |x,i| 
-            
-            branch = x.records.any? ? :branch : nil
-
-            title = x.title
-            # is the target a web page?
-            title = title.green  if x.target[0] == 'w' 
-            title << '>' if branch
-            
-            ["%d.%s" % [i+1, title], branch, x.desc.yellow]
-            
-          end
-          print ("\b" * @linebuffer.length) + @selection.map \
-              {|x| x.values_at(0,2).join ' '}.join(" | ") + "\n"
-
-        end
-        print ("\b" * @linebuffer.length)
+        key = select_item(key.to_i-1)        
         
-        if (@linebuffer[/\s/] or a.length == 1) and key == ' ' then
-
-          @linebuffer.sub!(/\w+$/, @item_selected)
-          
-        end
-        print @linebuffer + key
-      else
-        @input_selection = nil
       end
+
+      query key if key
       
     elsif key == :arrow_down or key == :arrow_right      
 
@@ -293,8 +258,10 @@ class ConsoleCmdr < Cmdr
     oldlinebuffer = @linebuffer
     print ("\b" * oldlinebuffer.length)
 
+    type = @selection[-1][-1]
+    branch = @selection[i][1] == :branch
 
-    if @selection[i][1] == :branch or append_command then
+    if  branch or append_command or type == :message then
       
       if @linebuffer[-1] != ' ' then
         a = @linebuffer.split(/ /)
@@ -304,9 +271,12 @@ class ConsoleCmdr < Cmdr
       
       linebuffer.prepend @linebuffer
       execute_command = false
-    else
-      execute_command = true
+    else      
+
+      execute_command = true unless type == :interactive
     end
+    
+    execute_command = true if type == :message
 
     if @selection[i][1] == :branch then
       words = @linebuffer.split(/ /)      
@@ -322,8 +292,67 @@ class ConsoleCmdr < Cmdr
     print rblankpadding
     print ("\b" * rblankpadding.length)    
     
-    execute_command ? "\r" : nil
+    
+    return execute_command ? "\r" : (branch and type != :webpage) ? ' ' : nil
 
   end
+  
+  def query(key)
+    
+    a = @pxi.q?(@linebuffer+key)
 
+    if a then
+      
+      unless @input_selection == a.map(&:title) then
+        @input_selection = a.map(&:title)
+        @selection = a.map.with_index do |x,i| 
+          
+          branch = x.records.any? ? :branch : nil
+
+          title = x.title
+          # is the target a web page?
+          title = title.green  if x.target[0] == 'w' 
+          title << '>' if branch
+          
+          ["%d.%s" % [i+1, title], branch, x.desc.yellow, target(x.target.to_s)]
+          
+        end
+        
+        print ("\b" * @linebuffer.length) + @selection.map \
+            {|x| x.values_at(0,2).join ' '}.join(" | ") + "\n"
+
+      end
+      
+      print ("\b" * @linebuffer.length)
+      
+      if (@linebuffer[/\s/] or a.length == 1) and key == ' ' then
+
+        @linebuffer.sub!(/\w+$/, @item_selected)
+        
+      end
+      
+      print @linebuffer + key
+      
+    else
+      
+      @input_selection = nil
+      
+    end  
+    
+  end
+
+  def target(c)
+    
+    case c.to_sym
+    when :i 
+      :interactive
+    when :w 
+      :webpage      
+    when :m
+      :message
+    else
+      :command
+    end
+  end
+  
 end
