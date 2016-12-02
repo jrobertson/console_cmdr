@@ -258,10 +258,12 @@ class ConsoleCmdr < Cmdr
     oldlinebuffer = @linebuffer
     print ("\b" * oldlinebuffer.length)
 
-    type = @selection[-1][-1]
+
+    type = @selection[i][-1]
     branch = @selection[i][1] == :branch
 
-    if  branch or append_command or type == :message then
+    if  branch or append_command or type == :message \
+                                 or type == :interactive then
       
       if @linebuffer[-1] != ' ' then
         a = @linebuffer.split(/ /)
