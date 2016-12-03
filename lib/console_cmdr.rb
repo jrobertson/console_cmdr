@@ -194,7 +194,7 @@ class ConsoleCmdr < Cmdr
         @keys.pop
         return nil
       end
-      
+
       select_item(i)
       
     elsif key == :arrow_left
@@ -266,9 +266,12 @@ class ConsoleCmdr < Cmdr
                                  or type == :interactive then
       
       if @linebuffer[-1] != ' ' then
+
         a = @linebuffer.split(/ /)
         a.pop
-        @linebuffer = a.join ' '
+        @linebuffer = a.join(' ')
+        @linebuffer += ' ' if @linebuffer.length > 0        
+        
       end
       
       linebuffer.prepend @linebuffer
@@ -279,7 +282,7 @@ class ConsoleCmdr < Cmdr
     end
     
     execute_command = true if type == :message
-
+    
     if @selection[i][1] == :branch then
       words = @linebuffer.split(/ /)      
       @linebuffer = (words[0..-2] + [linebuffer]).join(' ') 
