@@ -262,8 +262,7 @@ class ConsoleCmdr < Cmdr
     type = @selection[i][-1]
     branch = @selection[i][1] == :branch
 
-    if  branch or append_command or type == :message \
-                                 or type == :interactive then
+    if  branch or append_command or type == :message  then
       
       if @linebuffer[-1] != ' ' then
 
