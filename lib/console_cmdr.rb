@@ -49,6 +49,7 @@ class ConsoleCmdr < Cmdr
       
       c = $stdin.getch
       #puts 'c:'  + c.inspect
+      #puts
       #puts c.ord
       
       # [27, 91, 65] = up_arrow
@@ -68,7 +69,7 @@ class ConsoleCmdr < Cmdr
         seq << 65
         c = :arrow_up
         on_keypress(c)
-        #input c
+        input c
       elsif c.ord == 66 and seq[1] == 91
         seq << 66
         c = :arrow_down
@@ -113,6 +114,11 @@ class ConsoleCmdr < Cmdr
         puts 
         @linebuffer = ''
         display_output()
+      elsif c == "\u0012" # CTR+R
+        #repeat command
+        c = :ctrl_r
+        new_c = on_keypress(c)
+        input(new_c, &blk)
       else
         if block_given? then
           char = on_keypress(c)
@@ -162,9 +168,21 @@ class ConsoleCmdr < Cmdr
     print s + "\n> "
   end
   
-  def cli_update(s='')
-    print s
+  def clear_cli()
+    oldlinebuffer = @linebuffer
+    
+    height, width = TermInfo.screen_size 
+
+    print ("\b" * oldlinebuffer.length)
+    rblankpadding =  ' ' * (width)
+    print rblankpadding
+    print ("\b" * rblankpadding.length)
   end
+  
+  def cli_update(s='')
+
+    print s
+  end  
   
   def on_keypress(key)
     
@@ -181,8 +199,12 @@ class ConsoleCmdr < Cmdr
       end
 
       query key if key
-      
-    elsif key == :arrow_down or key == :arrow_right      
+
+    elsif key == :arrow_up
+      # uses previous command in @history stack      
+    elsif key == :arrow_down 
+      # uses next command in @history stack
+    elsif key == :arrow_right      
 
       return if  @input_selection.nil?      
       
@@ -238,6 +260,13 @@ class ConsoleCmdr < Cmdr
       end
       
       select_item(i, append_command: true)
+      
+    elsif key == :ctrl_r
+      
+      @linebuffer = @history.last
+      cli_update @linebuffer
+     
+      key = "\r"
     end
     
     return key

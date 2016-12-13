@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'console_cmdr'
-  s.version = '0.4.5'
+  s.version = '0.4.6'
   s.summary = 'A customisable command-line shell which uses the cmdr gem.'
   s.authors = ['James Robertson']
   s.files = Dir['lib/console_cmdr.rb']
