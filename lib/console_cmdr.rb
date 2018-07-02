@@ -11,7 +11,8 @@ require 'io/console'
 
 class ConsoleCmdr < Cmdr
 
-  def initialize(pxindex: nil)
+  def initialize(pxindex: nil, debug: false)
+    
     super()
     @pxindex_filepath = pxindex
     @pxi = pxindex ? PxIndex.new(pxindex) : nil
@@ -20,6 +21,8 @@ class ConsoleCmdr < Cmdr
     @item_selected = ''
     @input_selection = []
     @running = true
+    @debug = debug
+    
   end
   
   def clear()
@@ -41,6 +44,7 @@ class ConsoleCmdr < Cmdr
   
   def start(&blk)
     
+    @running = true
     cli_banner()
 
     seq = []
@@ -111,6 +115,8 @@ class ConsoleCmdr < Cmdr
         seq = []
         on_keypress(c)
       elsif c == "\u0003"  # CTRL+C        
+        c = :ctrl_c
+        on_keypress(c)
         puts 
         @linebuffer = ''
         display_output()
@@ -129,10 +135,14 @@ class ConsoleCmdr < Cmdr
           
         else
           input(c) do |command|
-
+            
+            puts 'command: ' + command.inspect if @debug
+            
             case command
             when 'time'
               Time.now.to_s
+            else
+              on_enter(command)
             end
           end
         end
@@ -182,7 +192,11 @@ class ConsoleCmdr < Cmdr
   def cli_update(s='')
 
     print s
-  end  
+  end
+
+  def on_enter(command)
+    puts 'entered: ' + command.inspect
+  end
   
   def on_keypress(key)
     
